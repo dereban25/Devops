@@ -4,8 +4,8 @@ import boto3
 
 #1.Create One EC2 INSTANCES
 ec2 = boto3.resource('ec2',
-                     aws_access_key_id = 'AKIAJBCBEISY5WRTLGLQ',
-                     aws_secret_access_key = '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',
+                     aws_access_key_id = 'insert access key',
+                     aws_secret_access_key = 'insert secret key',
                      region_name = 'us-east-1')
 
 ec2.create_instances(
