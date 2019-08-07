@@ -1,0 +1,51 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Windows CloudWatch Diskspace Alarms
+#-------------------------------------------------------------------------------
+Parameters:
+#-------------------------------------------------------------------------------
+  instanceid:
+    Description: "Choose an instance id"
+    Type: AWS::EC2::Instance::Id
+
+  instancename:
+    Description: "Please provide EC2 instance name"
+    Type: "String"
+    MinLength: '1'
+    MaxLength: '50'
+
+  warningsnsarn:
+    Description: "Please provide an ARN of SNS topic - WARNING Type"
+    Type: "String"
+
+  volume:
+    Description: "Provide Disk name (ex.: C:)"
+    Type: "String"
+    Default: "C:"
+    MinLength: '1'
+    MaxLength: '5'
+#-------------------------------------------------------------------------------
+Resources:
+#-------------------------------------------------------------------------------
+  DiskSpaceINFO:
+    Type: AWS::CloudWatch::Alarm
+    DeletionPolicy: Retain
+    Properties:
+      AlarmDescription: !Sub "${instancename} - over 75% of ${volume} Drive space is in use"
+      AlarmActions:
+      - !Ref warningsnsarn
+      OKActions:
+      - !Ref warningsnsarn
+      MetricName: "LogicalDisk % Free Space"
+      Namespace: CWAgent
+      Statistic: Average
+      Period: '300'
+      EvaluationPeriods: '1'
+      Threshold: '25'
+      ComparisonOperator: LessThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref instanceid
+      - Name: instance
+        Value: !Ref volume
+      - Name: objectname
+        Value: LogicalDisk

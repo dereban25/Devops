@@ -1,0 +1,103 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Windows CloudWatch Alarms - CPU Memory Instance and System Status
+#------------------------------------------------------------------------------
+Parameters:
+#------------------------------------------------------------------------------
+  instanceid:
+    Description: "Choose an instance id"
+    Type: AWS::EC2::Instance::Id
+
+  instancename:
+    Description: "Please provide EC2 instance name"
+    Type: "String"
+    MinLength: '1'
+    MaxLength: '50'
+
+  warningsnsarn:
+    Description: "Please provide an ARN of SNS topic - WARNING Type"
+    Type: "String"
+#------------------------------------------------------------------------------
+Resources:
+#------------------------------------------------------------------------------
+  CPUAlarmINFO:
+    Type: AWS::CloudWatch::Alarm
+    DeletionPolicy: Retain
+    Properties:
+      AlarmDescription: !Sub "${instancename} - High CPU Usage 90%"
+      AlarmActions:
+      - !Ref warningsnsarn
+      OKActions:
+      - !Ref warningsnsarn
+      MetricName: CPUUtilization
+      Namespace: AWS/EC2
+      Statistic: Average
+      Period: '900'
+      EvaluationPeriods: '1'
+      Threshold: '90'
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref instanceid
+#------------------------------------------------------------------------------
+  MemoryAlarmINFO:
+    Type: AWS::CloudWatch::Alarm
+    DeletionPolicy: Retain
+    Properties:
+      AlarmDescription: !Sub "${instancename} - High Memory Usage 90%"
+      AlarmActions:
+      - !Ref warningsnsarn
+      OKActions:
+      - !Ref warningsnsarn
+      MetricName: "Memory % Committed Bytes In Use"
+      Namespace: CWAgent
+      Statistic: Average
+      Period: '900'
+      EvaluationPeriods: '1'
+      Threshold: '90'
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref instanceid
+      - Name: objectname
+        Value: Memory
+#------------------------------------------------------------------------------
+  SystemStatusAlarmCRITICAL:
+    Type: AWS::CloudWatch::Alarm
+    DeletionPolicy: Retain
+    Properties:
+      AlarmDescription: !Sub "${instancename} - instance recovery process has been triggered because of failed System Status Check"
+      Namespace: AWS/EC2
+      MetricName: StatusCheckFailed_System
+      Statistic: Minimum
+      Period: '60'
+      EvaluationPeriods: '2'
+      ComparisonOperator: GreaterThanThreshold
+      Threshold: '1'
+      AlarmActions:
+      - !Sub "arn:aws:automate:${AWS::Region}:ec2:recover"
+      - !Ref warningsnsarn
+      OKActions:
+      - !Ref warningsnsarn
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref instanceid
+#------------------------------------------------------------------------------
+  InstanceStatusAlarmCRITICAL:
+    Type: AWS::CloudWatch::Alarm
+    DeletionPolicy: Retain
+    Properties:
+      AlarmDescription: !Sub "${instancename} - Instance Status Check Failed - please investigate. Troubleshooting: https://goo.gl/Ea27Gd"
+      Namespace: AWS/EC2
+      MetricName: StatusCheckFailed_Instance
+      Statistic: Minimum
+      Period: '60'
+      EvaluationPeriods: '3'
+      ComparisonOperator: GreaterThanThreshold
+      Threshold: '1'
+      AlarmActions:
+      - !Ref warningsnsarn
+      OKActions:
+      - !Ref warningsnsarn
+      Dimensions:
+      - Name: InstanceId
+        Value: !Ref instanceid
